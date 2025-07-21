@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desencriptador CUBIT - Visión por Computadora</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   
+ <script async src="https://docs.opencv.org/master/opencv.js" onload="onOpenCVReady()"></script> 
+   <script async src="https://docs.opencv.org/4.5.5/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script> 
+  
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #1a2a6c;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --crypto: #27ae60;
+            --purple: #9b59b6;
+            --shadow: 0 5px 15px rgba(0,0,0,0.2);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary), #2c3e50);
+            color: var(--light);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(to right, var(--secondary), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--warning);
+            max-width: 800px;
+            margin: 0 auto 25px;
+        }
+
+        .card {
+            background: rgba(44, 62, 80, 0.92);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .card-title {
+            color: var(--warning);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--success);
+        }
+
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--secondary);
+            border-radius: 10px;
+            padding: 35px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--success);
+            background: rgba(46, 204, 113, 0.1);
+        }
+        
+        .upload-area i {
+            font-size: 3.5rem;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            transition: var(--transition);
+        }
+        
+        .upload-area:hover i {
+            color: var(--success);
+        }
+        
+        .upload-area h4 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+        
+        input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        #imagePreview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            display: none;
+            margin: 20px auto;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--secondary);
+        }
+        
+        #decodedMessage {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 25px;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            min-height: 150px;
+        }
+        
+        .decoding-result {
+            background: rgba(39, 174, 96, 0.15);
+            border-left: 4px solid var(--success);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 25px 0;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-purple {
+            background: linear-gradient(to right, #9b59b6, #8e44ad);
+            color: white;
+        }
+
+        .btn-purple:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 18px rgba(155, 89, 182, 0.4);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 0 20px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.75);
+        }
+        
+        .system-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(44, 62, 80, 0.95);
+            border-left: 4px solid var(--success);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            max-width: 350px;
+            z-index: 1000;
+        }
+        
+        .system-notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--success);
+        }
+        
+        .notification-content {
+            font-size: 0.9rem;
+        }
+        
+        .opencv-status {
+            background: rgba(52, 152, 219, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .opencv-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .opencv-ready {
+            color: var(--success);
+            font-weight: bold;
+        }
+        
+        .processing-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        
+        .step-icon {
+            font-size: 1.2rem;
+        }
+        
+        .step-success {
+            color: var(--success);
+        }
+        
+        .step-waiting {
+            color: var(--warning);
+        }
+        
+        .byte-reconstruction {
+            background: rgba(52, 152, 219, 0.15);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .debug-info {
+            background: rgba(231, 76, 60, 0.15);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .debug-title {
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(26, 40, 52, 0.6);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .hero-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--secondary);
+            text-shadow: 0 0 15px rgba(52, 152, 219, 0.7);
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: rgba(44, 62, 80, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            text-align: center;
+        }
+        
+        .feature-card i {
+            font-size: 2.5rem;
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            h1 {
+                font-size: 2.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Desencriptador CUBIT</h1>
+            <p class="subtitle">Extrae mensajes secretos de imágenes con visión por computadora</p>
+        </header>
+        
+        <div class="hero">
+            <div class="hero-icon">
+                <i class="fas fa-lock-open"></i>
+            </div>
+            <h2>Descifra mensajes ocultos en imágenes</h2>
+            <p>Utiliza tecnología avanzada de OpenCV para extraer información de imágenes CUBIT</p>
+        </div>
+
+        <div class="opencv-status">
+            <div id="opencvLoading" class="opencv-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Cargando OpenCV.js (8.5MB)...</span>
+            </div>
+            <div id="opencvReady" class="opencv-ready" style="display: none;">
+                <i class="fas fa-check-circle"></i> OpenCV.js cargado y listo
+            </div>
+        </div>
+
+       <div class="card">
+            <h2 class="card-title">Decodificar Mensajes de Imágenes</h2>
+            <div class="upload-container">
+                <div class="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h4>Arrastra y suelta una imagen CUBIT aquí</h4>
+                    <p>o haz clic para seleccionar un archivo</p>
+                    <input type="file" id="imageUpload" accept="image/*">
+                </div>
+                
+                <img id="imagePreview" alt="Vista previa de la imagen cargada">
+                
+                <div class="action-buttons">
+                    <button class="btn btn-purple" id="decodeBtn" disabled>
+                        <i class="fas fa-unlock"></i> Desencriptar Imagen
+                    </button>
+                </div>
+                </div>
+                <div id="processingSteps" class="processing-steps" style="display: none;">
+                    <div class="step-indicator">
+                        <i class="fas fa-sync fa-spin step-icon step-waiting" id="step1Icon"></i>
+                        <span id="step1Text">Detectando cuadrícula CUBIT...</span>
+                    </div>
+                    <div class="step-indicator">
+                        <i class="fas fa-circle step-icon step-waiting" id="step2Icon"></i>
+                        <span id="step2Text">Extrayendo bits activos</span>
+                    </div>
+                    <div class="step-indicator">
+                        <i class="fas fa-circle step-icon step-waiting" id="step3Icon"></i>
+                        <span id="step3Text">Reconstruyendo bytes</span>
+                    </div>
+                    <div class="step-indicator">
+                        <i class="fas fa-circle step-icon step-waiting" id="step4Icon"></i>
+                        <span id="step4Text">Decodificando mensaje</span>
+                    </div>
+                </div>
+                
+                <div id="decodedMessage">
+                    <p class="placeholder" style="text-align: center; color: #7f8c8d;">
+                        <i class="fas fa-lock" style="font-size: 2.5rem; margin-bottom: 15px;"></i>
+                        <br>El mensaje desencriptado aparecerá aquí
+                    </p>
+                </div>
+            </div>
+
+      
+      
+        <div class="features">
+            <div class="feature-card">
+                <i class="fas fa-brain"></i>
+                <h3>Inteligencia Artificial</h3>
+                <p>Análisis avanzado con algoritmos de visión por computadora</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Seguro y Confiable</h3>
+                <p>Procesamiento local sin enviar datos a servidores</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-bolt"></i>
+                <h3>Rápido y Eficiente</h3>
+                <p>Desencriptación en tiempo real con WebAssembly</p>
+            </div>
+        </div>
+
+               </div>
+        
+        <footer>
+            <p>Sistema de Mensajes Cifrados Visuales - Tecnología CUBIT con OpenCV</p>
+            <p>Copyright © 2025 - CRIPTO BB8C48 | BIG BOSS Informática || Servicios | Todos los Derechos Reservados</p>
+        </footer>
+    
+
+    <div class="system-notification" id="notification">
+        <div class="notification-title">Sistema de Mensajes</div>
+        <div class="notification-content" id="notificationContent"></div>
+    </div>
+    
+    <canvas id="processingCanvas" width="640" height="480" style="position: absolute; left: -9999px;"></canvas>
+
+    
+
+<script>
+let cvReady = false;
+function onOpenCvReady() {
+    document.getElementById("opencvLoading").style.display = "none";
+  document.getElementById("opencvReady").style.display = "block";
+    cvReady = true;}
+  
+document.getElementById("imageUpload").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file || !cvReady) return;
+    const reader = new FileReader();
+    reader.onload = function (event) {
+        const img = new Image();
+      
+        img.onload = () => {
+    document.getElementById("imagePreview").src = img.src;
+    document.getElementById("imagePreview").style.display = "block";
+    document.getElementById("decodeBtn").disabled = false;
+};
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+document.getElementById("decodeBtn").addEventListener("click", () => {
+    const imgElement = document.getElementById("imagePreview");
+   if (!imgElement.src || imgElement.src.includes("about:blank")) {
+    return alert("Sube una imagen válida");
+
+
+    const mat = cv.imread(imgElement);
+    const size = 7; 
+    const cellWidth = mat.cols / size;
+    const cellHeight = mat.rows / size;
+    let binary = '';
+
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            const x0 = Math.floor(x * cellWidth);
+            const y0 = Math.floor(y * cellHeight);
+            const roi = mat.roi(new cv.Rect(x0, y0, Math.floor(cellWidth), Math.floor(cellHeight)));
+            const mean = cv.mean(roi);
+            roi.delete();
+            binary += mean[0] < 128 ? '1' : '0'; // Asumiendo fondo blanco, cubit violeta
+        }
+    }
+
+    mat.delete();
+    showSteps(binary);
+});
+
+function showSteps(binary) {
+    document.getElementById("processingSteps").style.display = "block";
+    updateStep("step1", "✔ Cuadrícula detectada", true);
+    setTimeout(() => {
+        updateStep("step2", "✔ Bits extraídos", true);
+        setTimeout(() => {
+            updateStep("step3", "✔ Bytes reconstruidos", true);
+            const message = binaryToText(binary);
+            setTimeout(() => {
+                updateStep("step4", "✔ Mensaje decodificado", true);
+                document.getElementById("decodedMessage").innerHTML =
+                    `<p style="text-align:center;"><strong>${message}</strong></p>`;
+            }, 500);
+        }, 500);
+    }, 500);
+}
+
+function binaryToText(binary) {
+    let result = '';
+    for (let i = 0; i < binary.length; i += 8) {
+        const byte = binary.slice(i, i + 8);
+        const charCode = parseInt(byte, 2);
+        if (!isNaN(charCode) && charCode >= 32 && charCode <= 126) {
+            result += String.fromCharCode(charCode);
+        }
+    }
+    return result || '[Mensaje no encontrado]';
+}
+
+function updateStep(stepId, text, success) {
+    document.getElementById(`${stepId}Icon`).className =
+        success ? "fas fa-check-circle step-icon step-done" : "fas fa-sync fa-spin step-icon step-waiting";
+    document.getElementById(`${stepId}Text`).textContent = text;
+}
+</script>
+      
+  <!--
+        // Variables globales
+        let cvReady = false;
+        
+        // Función que se llama cuando OpenCV está listo
+        function onOpenCVReady() {
+            cvReady = true;
+            document.getElementById('opencvLoading').style.display = 'none';
+            document.getElementById('opencvReady').style.display = 'block';
+            console.log('OpenCV loaded, version:', cv.getVersionString());
+            showNotification('Sistema listo', 'OpenCV.js cargado correctamente');
+        }
+        
+        // Mostrar notificación
+        function showNotification(title, message, duration = 3000) {
+            const notification = document.getElementById('notification');
+            const notificationContent = document.getElementById('notificationContent');
+            
+            notificationContent.innerHTML = `<strong>${title}</strong><br>${message}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+        
+        // Función para desencriptar el patrón CUBIT
+        function decodeCubitPattern(cubitPattern) {
+            const bytes = [];
+            
+            // Agrupar los cubitos en grupos de 8 (cada byte original produce 8 cubitos)
+            for (let i = 0; i < cubitPattern.length; i += 8) {
+                const byteCubits = cubitPattern.slice(i, i + 8);
+                if (byteCubits.length !== 8) continue;
+                
+                // Reconstruir el byte original
+                const byteBits = Array(8).fill('0');
+                
+                // Para cada cubito en el grupo
+                for (let cubitIndex = 0; cubitIndex < 8; cubitIndex++) {
+                    const cubit = byteCubits[cubitIndex];
+                    
+                    // Para cada bit en el cubito
+                    for (let bitIndex = 0; bitIndex < 6; bitIndex++) {
+                        const globalBitIndex = (cubitIndex + bitIndex) % 8;
+                        // Solo actualizamos si encontramos un '1'
+                        if (cubit[bitIndex] === '1') {
+                            byteBits[globalBitIndex] = '1';
+                        }
+                    }
+                }
+                
+                // Convertir bits a byte
+                const byteString = byteBits.join('');
+                bytes.push(parseInt(byteString, 2));
+            }
+            
+            // Convertir bytes a texto
+            const decoder = new TextDecoder();
+            return decoder.decode(new Uint8Array(bytes));
+        }
+        
+        // Analizar imagen con OpenCV para extraer el patrón CUBIT
+        function analyzeImageWithOpenCV(image) {
+            return new Promise((resolve, reject) => {
+                if (!cvReady) {
+                    reject('OpenCV no está cargado');
+                    return;
+                }
+                
+                try {
+                    const processingSteps = document.getElementById('processingSteps');
+                    processingSteps.style.display = 'block';
+                    
+                    // Actualizar pasos de procesamiento
+                    document.getElementById('step1Text').textContent = "Detectando cuadrícula...";
+                    document.getElementById('step1Icon').className = "fas fa-sync fa-spin step-icon step-waiting";
+                    
+                    // Crear canvas para procesamiento
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Configurar canvas con las dimensiones de la imagen
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    
+                    // Crear matriz de OpenCV desde el canvas
+                    const src = cv.imread(canvas);
+                    
+                    // Paso 1: Preprocesamiento de la imagen
+                    const processed = new cv.Mat();
+                    cv.cvtColor(src, processed, cv.COLOR_RGBA2RGB);
+                    
+                    // Paso 2: Convertir a espacio de color HSV
+                    const hsv = new cv.Mat();
+                    cv.cvtColor(processed, hsv, cv.COLOR_RGB2HSV);
+                    
+                    // Paso 3: Detectar color verde (rango HSV)
+                    const greenMask = new cv.Mat();
+                    const lowGreen = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [35, 50, 50]);
+                    const highGreen = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [85, 255, 255]);
+                    cv.inRange(hsv, lowGreen, highGreen, greenMask);
+                    
+                    // Paso 4: Operaciones morfológicas para limpiar la máscara
+                    const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+                    cv.morphologyEx(greenMask, greenMask, cv.MORPH_OPEN, kernel);
+                    cv.morphologyEx(greenMask, greenMask, cv.MORPH_CLOSE, kernel);
+                    
+                    // Paso 5: Encontrar contornos
+                    const contours = new cv.MatVector();
+                    const hierarchy = new cv.Mat();
+                    cv.findContours(greenMask, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                    
+                    // Actualizar pasos de procesamiento
+                    document.getElementById('step1Text').textContent = "Cuadrícula detectada!";
+                    document.getElementById('step1Icon').className = "fas fa-check-circle step-icon step-success";
+                    document.getElementById('step2Text').textContent = "Extrayendo bits activos...";
+                    document.getElementById('step2Icon').className = "fas fa-sync fa-spin step-icon step-waiting";
+                    
+                    // Parámetros de la cuadrícula (asumimos 12 columnas y 8 filas de cubitos)
+                    const gridCols = 12;
+                    const gridRows = 8;
+                    const cellWidth = image.width / gridCols;
+                    const cellHeight = image.height / (gridRows * 6); // 6 bits por cubito
+                    
+                    // Patrón CUBIT detectado
+                    const cubitPattern = [];
+                    
+                    // Recorrer la cuadrícula
+                    for (let col = 0; col < gridCols; col++) {
+                        for (let row = 0; row < gridRows; row++) {
+                            const cubit = [];
+                            
+                            // Recorrer cada bit en el cubito (6 bits verticales)
+                            for (let bit = 0; bit < 6; bit++) {
+                                const x = col * cellWidth + cellWidth/2;
+                                const y = row * cellHeight * 6 + bit * cellHeight + cellHeight/2;
+                                
+                                // Comprobar si el punto central está en la máscara verde
+                                const isActive = greenMask.ucharPtr(Math.round(y), Math.round(x))[0] === 255;
+                                cubit.push(isActive ? '1' : '0');
+                            }
+                            
+                            cubitPattern.push(cubit);
+                        }
+                    }
+                    
+                    // Actualizar pasos de procesamiento
+                    document.getElementById('step2Text').textContent = "Bits extraídos!";
+                    document.getElementById('step2Icon').className = "fas fa-check-circle step-icon step-success";
+                    
+                    // Liberar memoria
+                    src.delete();
+                    processed.delete();
+                    hsv.delete();
+                    greenMask.delete();
+                    contours.delete();
+                    hierarchy.delete();
+                    kernel.delete();
+                    lowGreen.delete();
+                    highGreen.delete();
+                    
+                    resolve(cubitPattern);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+        
+        // Cuando el DOM está listo
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageUpload = document.getElementById('imageUpload');
+            const imagePreview = document.getElementById('imagePreview');
+            const decodeBtn = document.getElementById('decodeBtn');
+            const decodedMessage = document.getElementById('decodedMessage');
+            
+            // Manejar carga de imagen
+            imageUpload.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(event) {
+                        imagePreview.src = event.target.result;
+                        imagePreview.style.display = 'block';
+                        decodeBtn.disabled = false;
+                        showNotification('Imagen', 'Imagen cargada correctamente');
+                    };
+                    
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+            
+            // Desencriptar imagen con OpenCV
+            decodeBtn.addEventListener('click', async function() {
+                if (!imagePreview.src) {
+                    showNotification('Error', 'Por favor carga una imagen primero');
+                    return;
+                }
+                
+                if (!cvReady) {
+                    showNotification('Error', 'OpenCV no está cargado aún');
+                    return;
+                }
+                
+                // Mostrar estado de procesamiento
+                const processingSteps = document.getElementById('processingSteps');
+                processingSteps.style.display = 'block';
+                decodedMessage.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <div class="fa-3x">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                        </div>
+                        <p style="margin-top: 20px;">Analizando imagen con OpenCV...</p>
+                    </div>
+                `;
+                
+                // Esperar a que la imagen esté completamente cargada
+                await new Promise(resolve => {
+                    if (imagePreview.complete) resolve();
+                    else imagePreview.onload = resolve;
+                });
+                
+                try {
+                    // Analizar la imagen con OpenCV
+                    const cubitPattern = await analyzeImageWithOpenCV(imagePreview);
+                    
+                    // Actualizar pasos de procesamiento
+                    document.getElementById('step3Text').textContent = "Bytes reconstruidos!";
+                    document.getElementById('step3Icon').className = "fas fa-check-circle step-icon step-success";
+                    document.getElementById('step4Text').textContent = "Decodificando mensaje...";
+                    document.getElementById('step4Icon').className = "fas fa-sync fa-spin step-icon step-waiting";
+                    
+                    // Decodificar el mensaje
+                    const message = decodeCubitPattern(cubitPattern);
+                    
+                    // Mostrar información de depuración
+                    let debugInfo = '<div class="debug-title">Cubitos detectados:</div>';
+                    cubitPattern.forEach((cubit, index) => {
+                        debugInfo += `<div>Cubito ${index}: ${cubit.join('')}</div>`;
+                    });
+                    
+                    // Actualizar pasos de procesamiento
+                    document.getElementById('step4Text').textContent = "Mensaje decodificado!";
+                    document.getElementById('step4Icon').className = "fas fa-check-circle step-icon step-success";
+                    
+                    // Mostrar resultado
+                    decodedMessage.innerHTML = `
+                        <div class="decoding-result">
+                            <h3><i class="fas fa-lock-open"></i> Mensaje Desencriptado</h3>
+                            <p>${message}</p>
+                            <div class="byte-reconstruction">
+                                <p><i class="fas fa-microchip"></i> Se reconstruyeron ${message.length} caracteres a partir de ${cubitPattern.length} cubitos</p>
+                            </div>
+                            <div class="debug-info">
+                                ${debugInfo}
+                            </div>
+                        </div>
+                    `;
+                    
+                    showNotification('Desencriptado', 'Mensaje reconstruido exitosamente');
+                } catch (error) {
+                    decodedMessage.innerHTML = `
+                        <div class="decoding-result" style="border-left-color: var(--accent);">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Error</h3>
+                            <p>No se pudo desencriptar la imagen: ${error.message || error}</p>
+                            <p>Asegúrate de usar una imagen generada por el sistema CUBIT.</p>
+                        </div>
+                    `;
+                    showNotification('Error', 'Fallo en la desencriptación');
+                }
+            });
+        });
+    </script> -->
+</body>
+</html>
