@@ -6,9 +6,7 @@
     <title>Desencriptador CUBIT - Visión por Computadora</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
    
- <script async src="https://docs.opencv.org/master/opencv.js" onload="onOpenCVReady()"></script> 
-   <script async src="https://docs.opencv.org/4.5.5/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script> 
-  
+     <script async src="https://docs.opencv.org/4.5.5/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
     <style>
         * {
             margin: 0;
@@ -467,8 +465,9 @@
 let cvReady = false;
 function onOpenCvReady() {
     document.getElementById("opencvLoading").style.display = "none";
-  document.getElementById("opencvReady").style.display = "block";
-    cvReady = true;}
+    document.getElementById("opencvReady").style.display = "block";
+    cvReady = true;
+}
   
 document.getElementById("imageUpload").addEventListener("change", (e) => {
     const file = e.target.files[0];
@@ -491,7 +490,7 @@ document.getElementById("decodeBtn").addEventListener("click", () => {
     const imgElement = document.getElementById("imagePreview");
    if (!imgElement.src || imgElement.src.includes("about:blank")) {
     return alert("Sube una imagen válida");
-
+   }
 
     const mat = cv.imread(imgElement);
     const size = 7; 
