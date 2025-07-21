@@ -468,19 +468,18 @@ function onOpenCvReady() {
     document.getElementById("opencvReady").style.display = "block";
     cvReady = true;
 }
-  
+
 document.getElementById("imageUpload").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file || !cvReady) return;
     const reader = new FileReader();
     reader.onload = function (event) {
         const img = new Image();
-      
         img.onload = () => {
-    document.getElementById("imagePreview").src = img.src;
-    document.getElementById("imagePreview").style.display = "block";
-    document.getElementById("decodeBtn").disabled = false;
-};
+            document.getElementById("imagePreview").src = img.src;
+            document.getElementById("imagePreview").style.display = "block";
+            document.getElementById("decodeBtn").disabled = false;
+        };
         img.src = event.target.result;
     };
     reader.readAsDataURL(file);
@@ -488,9 +487,9 @@ document.getElementById("imageUpload").addEventListener("change", (e) => {
 
 document.getElementById("decodeBtn").addEventListener("click", () => {
     const imgElement = document.getElementById("imagePreview");
-   if (!imgElement.src || imgElement.src.includes("about:blank")) {
-    return alert("Sube una imagen válida");
-   }
+    if (!imgElement.src || imgElement.src.includes("about:blank")) {
+        return alert("Sube una imagen válida");
+    }
 
     const mat = cv.imread(imgElement);
     const size = 7; 
@@ -505,26 +504,33 @@ document.getElementById("decodeBtn").addEventListener("click", () => {
             const roi = mat.roi(new cv.Rect(x0, y0, Math.floor(cellWidth), Math.floor(cellHeight)));
             const mean = cv.mean(roi);
             roi.delete();
-            binary += mean[0] < 128 ? '1' : '0'; // Asumiendo fondo blanco, cubit violeta
+            binary += mean[0] < 128 ? '1' : '0'; // fondo blanco, cubit oscuro
         }
     }
 
     mat.delete();
-    showSteps(binary);
+
+    // Validación de límite
+    const decodedText = binaryToText(binary);
+    if (decodedText.length > 35) {
+        alert("⚠ El mensaje supera el límite gratuito de 35 caracteres.\n\nPara decodificar mensajes más largos, suscríbete por solo USD 7 cada 3 meses.");
+        return;
+    }
+
+    showSteps(binary, decodedText);
 });
 
-function showSteps(binary) {
+function showSteps(binary, decodedText) {
     document.getElementById("processingSteps").style.display = "block";
     updateStep("step1", "✔ Cuadrícula detectada", true);
     setTimeout(() => {
         updateStep("step2", "✔ Bits extraídos", true);
         setTimeout(() => {
             updateStep("step3", "✔ Bytes reconstruidos", true);
-            const message = binaryToText(binary);
             setTimeout(() => {
                 updateStep("step4", "✔ Mensaje decodificado", true);
                 document.getElementById("decodedMessage").innerHTML =
-                    `<p style="text-align:center;"><strong>${message}</strong></p>`;
+                    `<p style="text-align:center;"><strong>${decodedText}</strong></p>`;
             }, 500);
         }, 500);
     }, 500);
